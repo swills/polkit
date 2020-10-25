@@ -1,0 +1,31 @@
+freebsd_instance:
+  image: freebsd-12-1-release-amd64
+
+task:
+  install_script:
+  - pkg update -f
+  - pkg upgrade -fy
+  - pkg install -y autoconf-wrapper automake libtool gtk-doc gettext-tools gmake gobject-introspection intltool pkgconf spidermonkey78
+  script:
+    - mkdir _build
+    - cd _build
+    - env CFLAGS="-O2 -pipe  -fstack-protector-strong -isystem /usr/local/include -fno-strict-aliasing" LDFLAGS="-L/usr/local/lib" ../autogen.sh
+      --disable-dependency-tracking
+      --disable-gtk-doc-html
+      --without-html-dir
+      --with-authfw=pam
+      --with-pam-include=system
+      --with-os-type=freebsd
+      --with-polkitd-user=polkitd
+      --disable-static
+      --disable-examples
+      --enable-libsystemd-login=no
+      --enable-libelogind=no
+      --disable-test
+      --enable-introspection=yes
+      --localstatedir=/var
+      --disable-man-pages
+      --prefix=/usr/local
+    - perl -pi -e 's,#!/usr/bin/perl -w,#!/usr/local/bin/perl -w,' ../src/polkitbackend/toarray.pl
+    - gmake
+    - gmake check
